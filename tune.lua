@@ -186,6 +186,7 @@ tune.write = function(path)
     print(tab.save(states, path..'tune.data'))
 end
 
+--[[
 local tune_ = function(o)
     local left, top = o.left or 1, o.top or 1
     local width = o.width or 16
@@ -400,5 +401,6 @@ local tune_ = function(o)
         }
     end):merge(o)
 end
+--]]
 
-return tune, tune_
+return tune
