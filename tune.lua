@@ -134,12 +134,14 @@ tune.setup = function(arg)
 end
 
 tune.read = function(path)
+    local path = path or norns.state.data..'tune.data'
     local t, err = tab.load(path)
-    if t then states = t else print(err) end
+    if t then states = t else print('tune.read: '..err) end
 end
 
 tune.write = function(path)
-    print(tab.save(states, path..'tune.data'))
+    local path = path or norns.state.data..'tune.data'
+    print(tab.save(states, path))
 end
 
 ------------------------------- UI components ----------------------------------
