@@ -84,7 +84,7 @@ tune.degoct = function(row, column, pre, trans, toct)
     if rowint == 0 then rowint = #iv end
 
     local deg = (trans or 0) + row + ((column-1) * (rowint))
-    local oct = (toct or 0) - 5
+    local oct = (toct or 0)
     deg, oct = tune.wrap(deg, oct, pre)
     
     return deg, oct
@@ -97,7 +97,8 @@ end
 --number to be multiplied by center freq in hz
 tune.hz = function(row, column, trans, toct, pre)
     local iv = intervals(pre)
-    local deg, oct = tune.degoct(row, column, pre, trans, toct)
+    local toct = toct or 0
+    local deg, oct = tune.degoct(row, column, pre, trans, toct - 5)
 
     return (
         2^(tonic(pre)/(mode(pre).tones or 12)) * 2^oct 
@@ -109,8 +110,29 @@ tune.hz = function(row, column, trans, toct, pre)
     )
 end
 
---TODO
-tune.volts = function() end
+local JIVOLT = 1 / math.log(2)
+local function justvolts(f) return math.log(f) * JIVOLT end
+
+tune.volts = function(row, column, trans, toct, pre) 
+    local iv = intervals(pre)
+    local toct = toct or 0
+    local deg, oct = tune.degoct(row, column, pre, trans, toct)
+
+    if mode(pre).temperment == 'just' then
+        return (
+            justvolts(mode(pre).ratios[math.abs(tonic(pre)) + 1]) 
+            + oct 
+            + justvolts(mode(pre).ratios[iv[deg] + 1])
+            - 1
+        )
+    else
+        return (
+            (tonic(pre)/(mode(pre).tones)) 
+            + oct 
+            + (iv[deg]/mode(pre).tones)
+        )
+    end
+end
 
 --TODO
 tune.midi = function() end
