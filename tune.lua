@@ -409,7 +409,7 @@ function Tune.norns.options(args)
             }
         }
         _scale{
-            x = x[1], y = y[1], n = 1, wrap = true,
+            x = x[1], y = 4, n = 1, wrap = true, flow = 'y',
             min = 1, step = 1, inc = 1, 
             max = #scale_names[states[i].mode],
             label = 'scale',
