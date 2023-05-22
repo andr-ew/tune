@@ -1,7 +1,7 @@
 local mu = require 'musicutil'
 
 -- import 12tet scales from musicutil
-local west = {}
+local twelvetone = {}
 local majp, minp
 for i,v in ipairs(mu.SCALES) do
     local scl = { name=v.name, iv = {} }
@@ -10,11 +10,11 @@ for i,v in ipairs(mu.SCALES) do
     end
     if scl.name == 'Major Pentatonic' then majp = i end
     if scl.name == 'Minor Pentatonic' then minp = i end
-    west[i] = scl
+    twelvetone[i] = scl
 end
 -- put major pentatonic & minor pentatonic in front
-table.insert(west, 1, table.remove(west, minp))
-table.insert(west, 1, table.remove(west, majp+1))
+table.insert(twelvetone, 1, table.remove(twelvetone, minp))
+table.insert(twelvetone, 1, table.remove(twelvetone, majp+1))
 
 -- maqam scales - could defnintely use some more !
 local maqam = {
@@ -25,9 +25,14 @@ local maqam = {
     { name = 'Hijaz (Jins Rast)', iv = { 0, 1, 4, 5, 7, 8.5, 10, }},
 }
 
-local scales = {
-    { name='12tet', temperment = 'equal', tones = 12, scales = west },
-    { name='maqam', temperment = 'equal', tones = 12, scales = maqam },
+local scale_groups = {
+    ['12 tone'] = twelvetone,
+    ['maqam'] = maqam,
+}
+
+local tunings = {
+    { name='12tet', temperment = 'equal', tones = 12, scales = '12 tone' },
+    { name='maqam', temperment = 'equal', tones = 12, scales = 'maqam' },
 }
 
 -- JI tunings -- thx ezra !
@@ -59,9 +64,9 @@ local pythag = function()
       p5(5, 7),   -- maj 7th
    }
 end
-table.insert(scales, {
+table.insert(tunings, {
     name = 'ji pythagoras',
-    scales = west,
+    scales = '12 tone',
     ratios = pythag(),
     temperment = 'just',
 })
@@ -69,9 +74,9 @@ table.insert(scales, {
 -- "chromaticized" version of ptolemy's intense diatonic
 -- (new intervals constructed from major thirds)
 
-table.insert(scales, {
+table.insert(tunings, {
     name = 'ji ptolemaic',
-    scales = west,
+    scales = '12 tone',
     temperment = 'just',
     ratios = {	    
         1,            -- C  
@@ -89,30 +94,30 @@ table.insert(scales, {
     },
 })
 
-table.insert(scales, {
+table.insert(tunings, {
     name = 'ji normal',
-    scales = west,
+    scales = '12 tone',
     ratios = JI.normal(),
     temperment = 'just',
 })
 
-table.insert(scales, {
+table.insert(tunings, {
     name = 'ji overtone',
-    scales = west,
+    scales = '12 tone',
     ratios = JI.overtone(),
     temperment = 'just',
 })
 
-table.insert(scales, {
+table.insert(tunings, {
     name = 'ji undertone',
-    scales = west,
+    scales = '12 tone',
     ratios = JI.undertone(),
     temperment = 'just',
 })
 
-table.insert(scales, {
+table.insert(tunings, {
     name = 'ji lamonte',
-    scales = west,
+    scales = '12 tone',
     ratios = JI.lamonte(),
     temperment = 'just',
 })
@@ -138,9 +143,9 @@ local qmt = function()
       5 * b / 4    -- Maj 7th
    }
 end
-table.insert(scales, {
+table.insert(tunings, {
     name = 'ji meantone',
-    scales = west,
+    scales = '12 tone',
     ratios = qmt(),
     temperment = 'just',
 })
@@ -164,11 +169,11 @@ local werck3 = function()
       128 / 81 * a2
    }
 end
-table.insert(scales, {
+table.insert(tunings, {
     name = 'ji werck3',
-    scales = west,
+    scales = '12 tone',
     ratios = werck3(),
     temperment = 'just',
 })
 
-return scales
+return tunings, scale_groups
