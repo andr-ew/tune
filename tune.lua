@@ -2,11 +2,13 @@ local tune = {}
 
 local tunings, scales, presets
 local tuning_names, scale_names = {}, {}
+local action = function() end
 
 function tune.setup(args)
     tunings = args.tunings or {}
     scales = args.scale_groups or {}
     presets = args.presets or 8
+    action = args.action or function() end
 
     for i,tuning in ipairs(tunings) do
         tuning_names[i] = tuning.name
@@ -64,6 +66,7 @@ end
 
 local function update_tuning()
     hide_show_params()
+    action()
 end
 
 local function add_preset_param(args)
@@ -153,7 +156,7 @@ function tune.params()
         }
     end
     add_preset_param{
-        type = 'number', id = 'row_tuning', name = 'row tuning', 
+        type = 'number', id = 'row_tuning', name = 'row tuning',
         min = 1, max = 12, default = 1,
         formatter = function(p) 
             local iv = get_intervals()
@@ -163,7 +166,6 @@ function tune.params()
             local deg = (rowint - 1)%#iv + 1
             local interval = math.floor(iv[deg])
 
-            print('deg', deg, 'iv', interval, 'name', interval_names[interval + 1])
             return interval_names[interval + 1]
         end
     }

@@ -1,14 +1,21 @@
-------------------------------- UI components ----------------------------------
+local Tune = { grid = {}, screen = {} }
 
-local Tune = { grid = {}, norns = {} }
+--TODO: trans & toct props, maybe
+function Tune.grid.fretboard()
+    return function(props)
+        if crops.device == 'grid' and crops.mode == 'redraw' then 
+            local g = crops.handler 
 
-local x, y
-do
-    local top, bottom = 10, 64-6
-    local left, right = 4, 128-4
-    local mul = { x = (right - left) / 2, y = (bottom - top) / 2 }
-    x = { left, left + mul.x*5/4, [1.5] = 24  }
-    y = { top, bottom - mul.y*1/2, [1.5] = 20 }
+            for i = 1, props.size do
+                local x, y = Grid.util.index_to_xy(props, i)
+
+                local v = (tune.degoct(x, y) == 1) and 1 or 0
+                local lvl = props.levels[v + 1]
+
+                if lvl>0 then g:led(x, y, lvl) end
+            end
+        end
+    end
 end
 
 -- https://stackoverflow.com/questions/43565484/how-do-you-take-a-decimal-to-a-fraction-in-lua-with-no-added-libraries
@@ -45,14 +52,6 @@ for i = 1,12 do
         end
     end
 end
-
-local iv_names = {
-    'octaves',
-    "min 2nds", "maj 2nds",
-    "min 3rds", "maj 3rds", "4ths",
-    "tritones", "5ths", "min 6ths",
-    "maj 6ths", "min 7ths", "maj 7ths",
-}
 
 -- ^ for half flat/sharp
 local note_names = {
@@ -165,7 +164,7 @@ function Tune.grid.tonic(args)
     end
 end
 
-function Tune.norns.scale_degrees(args)
+function Tune.screen.scale_degrees(args)
     local _labels = {}
     for i = 1, 24 do _labels[i] = Text.label() end
 
@@ -215,68 +214,4 @@ function Tune.norns.scale_degrees(args)
     end
 end
 
-function Tune.norns.options(args)
-    _mode = Text.enc.number()
-    _scale = Text.enc.number()
-    _tuning = Text.enc.number()
-
-    return function(props)
-        props.preset = props.preset or 1
-        local i = props.preset
-
-        _mode{
-            x = x[1], y = y[2], n = 2, wrap = true,
-            min = 1, step = 1, inc = 1, max = #modenames, flow = 'y',
-            label = 'tuning',
-            formatter = function()
-                return modenames[states[i].mode]
-            end,
-            value = function() return  end,
-            state = {
-                states[i].mode,
-                function(v) 
-                    states[i].mode = v 
-                    nest.grid.make_dirty()
-                end
-            }
-        }
-        _scale{
-            x = x[1], y = y[1], n = 1, wrap = true,
-            min = 1, step = 1, inc = 1, 
-            max = #scale_names[states[i].mode],
-            label = 'scale',
-            formatter = function(v)
-                return scale_names[states[i].mode][v]
-            end,
-            state = { 
-                state(i).scale,
-                function(v)
-                    state(i).scale = v
-                    nest.grid.make_dirty()
-                end
-            }
-        }
-        _tuning{
-            x = x[2], y = y[2], n = 3, flow = 'y',
-            min = 1, max = 12, step = 1, inc = 1,
-            label = 'rows',
-            formatter = function(v)
-                local deg
-                local iv = intervals(i)
-                local deg = iv[(v-1)%#iv+1]
-
-                return iv_names[deg+1]
-            end,
-            state = {
-                state(i).tuning[state(i).scale],
-                function(v)
-                    state(i).tuning[state(i).scale] = v
-                    nest.grid.make_dirty()
-                end
-            }
-        }
-    end
-end
-
-print('Tune', Tune)
-
+return Tune
