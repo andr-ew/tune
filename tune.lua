@@ -78,47 +78,14 @@ local function add_preset_param(args)
 end
 
 local tonic_names = { 'A','A#','B','C','C#','D','D#','E','F','F#','G','G#', }
+local interval_names = {
+    'octaves',
+    "min 2nds", "maj 2nds",
+    "min 3rds", "maj 3rds", "4ths",
+    "tritones", "5ths", "min 6ths",
+    "maj 6ths", "min 7ths", "maj 7ths",
+}
 
-function tune.params()
-    params:add_separator('tuning')
-
-    params:add{
-        type = 'number', id = 'tuning_preset', name = 'preset',
-        min = 1, max = presets, default = 1, action = update_tuning,
-    }
-
-    add_preset_param{
-        type = 'option', id = 'tuning', name = 'tuning',
-        options = tuning_names,
-    }
-    add_preset_param{
-        type = 'option', id = 'tonic', name = 'tonic',
-        options = tonic_names,
-    }
-    for group_name, _ in pairs(scales) do
-        add_preset_param{
-            type = 'option', id = 'scale_'..group_name, name = 'scale',
-            options = scale_names[group_name],
-        }
-    end
-    add_preset_param{
-        type = 'number', id = 'row_tuning', name = 'row tuning', 
-        min = 1, max = 12, default = 1,
-    }
-
-    params:add_group('toggle intervals', 12 * presets)
-    for pre = 1,presets do
-        for i = 1,12 do
-            params:add{
-                type = 'binary', behavior = 'toggle', 
-                id = 'enable_'..i..'_preset_'..pre, name = 'enable interval '..i,
-                default = 1, action = update_tuning,
-            }
-        end
-    end
-
-    hide_show_params()
-end
 
 local function get_tonic()
     return get_preset_param('tonic')
@@ -162,6 +129,58 @@ local function get_row_tuning()
 end
 
 tune.get_intervals = intervals
+
+function tune.params()
+    params:add_separator('tuning')
+
+    params:add{
+        type = 'number', id = 'tuning_preset', name = 'preset',
+        min = 1, max = presets, default = 1, action = update_tuning,
+    }
+
+    add_preset_param{
+        type = 'option', id = 'tuning', name = 'tuning',
+        options = tuning_names,
+    }
+    add_preset_param{
+        type = 'option', id = 'tonic', name = 'tonic',
+        options = tonic_names,
+    }
+    for group_name, _ in pairs(scales) do
+        add_preset_param{
+            type = 'option', id = 'scale_'..group_name, name = 'scale',
+            options = scale_names[group_name],
+        }
+    end
+    add_preset_param{
+        type = 'number', id = 'row_tuning', name = 'row tuning', 
+        min = 1, max = 12, default = 1,
+        formatter = function(p) 
+            local iv = get_intervals()
+
+            local rowint = p:get()
+
+            local deg = (rowint - 1)%#iv + 1
+            local interval = math.floor(iv[deg])
+
+            print('deg', deg, 'iv', interval, 'name', interval_names[interval + 1])
+            return interval_names[interval + 1]
+        end
+    }
+
+    params:add_group('toggle intervals', 12 * presets)
+    for pre = 1,presets do
+        for i = 1,12 do
+            params:add{
+                type = 'binary', behavior = 'toggle', 
+                id = 'enable_'..i..'_preset_'..pre, name = 'enable interval '..i,
+                default = 1, action = update_tuning,
+            }
+        end
+    end
+
+    hide_show_params()
+end
 
 tune.wrap = function(deg, oct)
     local iv = get_intervals()
