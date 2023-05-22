@@ -1,19 +1,3 @@
--- states = {
---     {
---         mode, --(tuning item)
---         tonic,
---         { --for each tuning item
---             scale,
---             tuning = { --row tuning, for each scale
---                 1,
---             },
---             toggles = { --note toggle, for each scale
---                 { 1, 1, 1... },
---             }
---         }
---     }
--- }
-
 local tune = {}
 
 local tunings, scales, presets
@@ -39,8 +23,16 @@ end
 
 local param_ids = {}
 
+local function get_preset()
+    return params:get('tuning_preset')
+end
+
+local function get_preset_param(id)
+    return params:get(id..'_preset_'..get_preset())
+end
+
 local function get_tuning()
-    return tunings[params:get('tuning_preset_'..params:get('tuning_preset'))]
+    return tunings[get_preset_param('tuning')]
 end
 
 local function hide_show_params()
@@ -128,40 +120,51 @@ function tune.params()
     hide_show_params()
 end
 
--- local tonics = {}
--- for i = 1, 12 do
---     local n = i - 9 - 1 -- start from C below middle A
---     tonics[i] = n
--- end
-
-
-local function tonic(pre)
-    return tonics[states[pre].tonic]
+local function get_tonic()
+    return get_preset_param('tonic')
 end
 
-local function tuning(pre)
-    local scl = state(pre).scale
-    return state(pre).tuning[scl]
+local function get_scale_idx()
+    local group = get_tuning().scales
+    local idx = get_preset_param('scale_'..group)
+
+    return idx
 end
 
-local function intervals(pre)
-    local scl = state(pre).scale
-    local all = mode(pre).scales[scl].iv
+local function get_scale_ivs()
+    local group = get_tuning().scales
+    local idx = get_preset_param('scale_'..group)
+    
+    return scales[group][idx].iv
+end
+
+local function get_interval_enabled(i)
+    return params:get('enable_'..i..'_preset_'..get_preset()) > 0
+end
+
+local function get_intervals()
+    local scl = get_scale_idx()
+    local all = get_scale_ivs()
 
     local some = {}
     for i,v in ipairs(all) do
-        if state(pre).toggles[scl][i] > 0 then 
+        if get_interval_enabled(i) then 
             table.insert(some, v)
         end
     end
     if #some == 0 then table.insert(some, all[1]) end
+
     return some
+end
+
+local function get_row_tuning()
+    return get_preset_param('row_tuning')
 end
 
 tune.get_intervals = intervals
 
-tune.wrap = function(deg, oct, pre)
-    local iv = intervals(pre)
+tune.wrap = function(deg, oct)
+    local iv = get_intervals()
 
     oct = oct + (deg-1)//#iv + 1
     deg = (deg - 1)%#iv + 1
@@ -170,34 +173,35 @@ tune.wrap = function(deg, oct, pre)
 end
 
 --TODO: start row wrapping in the middle of the grid vertically somehow
-tune.degoct = function(row, column, pre, trans, toct)
-    local iv = intervals(pre)
-    local rowint = tuning(pre) - 1
+tune.degoct = function(row, column, trans, toct)
+    local iv = get_intervals()
+    local rowint = get_row_tuning() - 1
     if rowint == 0 then rowint = #iv end
 
     local deg = (trans or 0) + row + ((column-1) * (rowint))
     local oct = (toct or 0)
-    deg, oct = tune.wrap(deg, oct, pre)
+    deg, oct = tune.wrap(deg, oct)
     
     return deg, oct
 end
 
-tune.is_tonic = function(row, column, pre, trans)
-    return tune.degoct(row, column, pre, trans) == 1
-end
+-- tune.is_tonic = function(row, column, trans)
+--     return tune.degoct(row, column, trans) == 1
+-- end
 
 --number to be multiplied by center freq in hz
-tune.hz = function(row, column, trans, toct, pre)
-    local iv = intervals(pre)
+tune.hz = function(row, column, trans, toct)
+    local iv = get_intervals()
     local toct = toct or 0
-    local deg, oct = tune.degoct(row, column, pre, trans, toct - 5)
+    local deg, oct = tune.degoct(row, column, trans, toct - 5)
+    local tuning = get_tuning()
 
     return (
-        2^(tonic(pre)/(mode(pre).tones or 12)) * 2^oct 
+        2^(get_tonic()/(tuning.tones or 12)) * 2^oct 
         * (
-            (mode(pre).temperment == 'just') 
-            and (mode(pre).ratios[iv[deg] + 1])
-            or (2^(iv[deg]/mode(pre).tones))
+            (tuning.temperment == 'just') 
+            and (tuning.ratios[iv[deg] + 1])
+            or (2^(iv[deg]/tuning.tones))
         )
     )
 end
@@ -205,23 +209,24 @@ end
 local JIVOLT = 1 / math.log(2)
 local function justvolts(f) return math.log(f) * JIVOLT end
 
-tune.volts = function(row, column, trans, toct, pre) 
-    local iv = intervals(pre)
+tune.volts = function(row, column, trans, toct) 
+    local iv = get_intervals()
     local toct = toct or 0
-    local deg, oct = tune.degoct(row, column, pre, trans, toct)
+    local deg, oct = tune.degoct(row, column, trans, toct)
+    local tuning = get_tuning()
 
-    if mode(pre).temperment == 'just' then
+    if tuning.temperment == 'just' then
         return (
-            justvolts(mode(pre).ratios[math.abs(tonic(pre)) + 1]) 
+            justvolts(tuning.ratios[math.abs(get_tonic()) + 1]) 
             + oct 
-            + justvolts(mode(pre).ratios[iv[deg] + 1])
+            + justvolts(tuning.ratios[iv[deg] + 1])
             - 1
         )
     else
         return (
-            (tonic(pre)/(mode(pre).tones)) 
+            (get_tonic()/(tuning.tones)) 
             + oct 
-            + (iv[deg]/mode(pre).tones)
+            + (iv[deg]/tuning.tones)
         )
     end
 end
