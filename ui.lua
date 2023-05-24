@@ -166,9 +166,9 @@ function Tune.grid.scale_degree()
     end
 end
 
-function Tune.screen.scale_degrees(args)
+function Tune.screen.scale_degrees()
     local _labels = {}
-    for i = 1, 24 do _labels[i] = Text.label() end
+    for i = 1, 24 do _labels[i] = Produce.screen.text_highlight() end
 
     return function(props)
         props.preset = props.preset or 1
