@@ -1,5 +1,14 @@
 local Tune = { grid = {}, screen = {} }
 
+function Tune.of_preset_param(id)
+    local p_id = id..'_preset_'..tune.get_preset()
+    return {
+        params:get(p_id),
+        params.set, params, p_id
+    }
+end
+
+
 --TODO: trans & toct props, maybe
 function Tune.grid.fretboard()
     return function(props)
@@ -71,20 +80,51 @@ local note_names = {
 local tonic_names = {}
 for i = 4, 15 do table.insert(tonic_names, note_names[(i-1)%12+1]) end
 
-local function KeyboardBackground(args)
-    local left, top = args.left or 1, args.top or 1
-    local width = args.width or 16
-
+local function KeyboardBackground()
     return function(props)
-        local lvl = 4
+        if crops.device == 'grid' and crops.mode == 'redraw' then 
+            local g = crops.handler 
+            local left, top = props.left or 1, props.top or 1
+            local width = props.width or 16
+            local lvl = 4
 
-        local g = nest.grid.device()
-
-        if nest.grid.is_drawing() then
             for i = 1,12 do
                 local pos = kb.pos[i]
 
                 g:led(left + pos.x - 1, top + pos.y - 1, lvl)
+            end
+        end
+    end
+end
+
+function Tune.grid.tonic()
+    return function(props)
+        if crops.device == 'grid' then 
+            local left, top = props.left or 1, props.top or 1
+
+            if crops.mode == 'input' then
+                local x, y, z = table.unpack(crops.args)
+
+                for i = 1,12 do
+                    if 
+                        z == 1 
+                        and x == (left + kb.pos[i].x - 1) 
+                        and y == (top + kb.pos[i].y - 1) 
+                    then
+                        crops.set_state(props.state, i)
+                        break
+                    end
+                end
+            elseif crops.mode == 'redraw' then
+                local g = crops.handler 
+
+                for i = 1,12 do
+                    local v = crops.get_state(props.state) or 1
+                    local pos = kb.pos[i]
+                    local lvl = props.levels[(v == i) and 2 or 1]
+
+                    g:led(left + pos.x - 1, top + pos.y - 1, lvl)
+                end
             end
         end
     end
@@ -126,40 +166,6 @@ function Tune.grid.scale_degrees(args)
                     end
                 },
             } end
-        end
-    end
-end
-
-function Tune.grid.tonic(args)
-    local left, top = args.left or 1, args.top or 1
-    local width = args.width or 16
-
-    local _bg = KeyboardBackground({ left = left, top = top, width = width })
-
-    local _toggles = {}
-    for i = 1, 12 do _toggles[i] = Grid.toggle() end
-
-    return function(props)
-        props.preset = props.preset or 1
-        local p = props.preset
-
-        _bg()
-
-        for i,_toggle in ipairs(_toggles) do
-            _toggle{
-                x = left + kb.pos[i].x - 1,
-                y = top + kb.pos[i].y - 1,
-                lvl = { 0, 15 },
-                state = {
-                    states[p].tonic == (i - 4)%12+1 and 1 or 0,
-                    function(v)
-                        if v > 0 then
-                            states[p].tonic = (i - 4)%12+1
-                            nest.screen.make_dirty()
-                        end
-                    end
-                }
-            }
         end
     end
 end

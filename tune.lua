@@ -29,9 +29,13 @@ local function get_preset()
     return params:get('tuning_preset')
 end
 
+tune.get_preset = get_preset
+
 local function get_preset_param(id)
     return params:get(id..'_preset_'..get_preset())
 end
+
+tune.get_preset_param = get_preset_param
 
 local function get_tuning()
     return tunings[get_preset_param('tuning')]
