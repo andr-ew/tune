@@ -8,7 +8,6 @@ function Tune.of_preset_param(id)
     }
 end
 
-
 --TODO: trans & toct props, maybe
 function Tune.grid.fretboard()
     return function(props)
@@ -80,23 +79,6 @@ local note_names = {
 local tonic_names = {}
 for i = 4, 15 do table.insert(tonic_names, note_names[(i-1)%12+1]) end
 
-local function KeyboardBackground()
-    return function(props)
-        if crops.device == 'grid' and crops.mode == 'redraw' then 
-            local g = crops.handler 
-            local left, top = props.left or 1, props.top or 1
-            local width = props.width or 16
-            local lvl = 4
-
-            for i = 1,12 do
-                local pos = kb.pos[i]
-
-                g:led(left + pos.x - 1, top + pos.y - 1, lvl)
-            end
-        end
-    end
-end
-
 function Tune.grid.tonic()
     return function(props)
         if crops.device == 'grid' then 
@@ -123,49 +105,63 @@ function Tune.grid.tonic()
                     local pos = kb.pos[i]
                     local lvl = props.levels[(v == i) and 2 or 1]
 
-                    g:led(left + pos.x - 1, top + pos.y - 1, lvl)
+                    if lvl>0 then g:led(left + pos.x - 1, top + pos.y - 1, lvl) end
                 end
             end
         end
     end
 end
 
-function Tune.grid.scale_degrees(args)
-    local left, top = args.left or 1, args.top or 1
-    local width = args.width or 16
-
-    local _bg = KeyboardBackground({ left = left, top = top, width = width })
-
-    local _mutes = {}
-    for i = 1, 24 do _mutes[i] = Grid.toggle() end
-
+function Tune.grid.scale_degrees_background()
     return function(props)
-        props.preset = props.preset or 1
-        local p = props.preset
+        if crops.device == 'grid' and crops.mode == 'redraw' then 
+            local g = crops.handler 
+            local left, top = props.left or 1, props.top or 1
+            local lvl = props.level
 
-        _bg()
+            for i = 1,12 do
+                local pos = kb.pos[i]
 
-        for i,_mute in ipairs(_mutes) do
-            local ii = i/2 + 0.5
+                if lvl>0 then g:led(left + pos.x - 1, top + pos.y - 1, lvl) end
+            end
+        end
+    end
+end
 
-            local scl = state(p).scale
-            local ivs = mode(p).scales[scl].iv
-            local iv = (ii-1-tonic(p))%12
-            local deg = tab.key(ivs, iv)
-            local is_interval = tab.contains(ivs, iv)
+function Tune.grid.scale_degree()
+    return function(props)
+        if crops.device == 'grid' then 
+            local left, top = props.left or 1, props.top or 1
 
-            if is_interval then _mute{
-                x = left + kb.pos[ii].x - 1,
-                y = top + kb.pos[ii].y - 1,
-                lvl = { 8, 15 },
-                state = {
-                    deg and state(p).toggles[scl][deg] or 0,
-                    function(v)
-                        if deg then state(p).toggles[scl][deg] = v end
-                        nest.screen.make_dirty()
+            local deg = props.degree
+            local ivs = tune.get_scale_ivs()
+            local iv = ivs[deg]
+
+            if iv then
+                local i = (math.floor(iv) + tune.get_tonic()) % 12 + 1
+
+                if crops.mode == 'input' then
+                    local x, y, z = table.unpack(crops.args)
+
+                    if 
+                        z == 1 
+                        and x == (left + kb.pos[i].x - 1) 
+                        and y == (top + kb.pos[i].y - 1) 
+                    then
+                        local v = crops.get_state(props.state) or 0
+
+                        crops.set_state(props.state, ~ v & 1)
                     end
-                },
-            } end
+                elseif crops.mode == 'redraw' then
+                    local g = crops.handler 
+
+                    local v = crops.get_state(props.state) or 0
+                    local pos = kb.pos[i]
+                    local lvl = props.levels[v + 1]
+
+                    if lvl>0 then g:led(left + pos.x - 1, top + pos.y - 1, lvl) end
+                end
+            end
         end
     end
 end

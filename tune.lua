@@ -41,6 +41,20 @@ local function get_tuning()
     return tunings[get_preset_param('tuning')]
 end
 
+local function get_scale_idx()
+    local group = get_tuning().scales
+    local idx = get_preset_param('scale_'..group)
+
+    return idx
+end
+
+local function get_scale_ivs()
+    local group = get_tuning().scales
+    local idx = get_preset_param('scale_'..group)
+    
+    return scales[group][idx].iv
+end
+
 local function hide_show_params()
     for pre = 1, presets do
         local show = params:get('tuning_preset') == pre
@@ -50,9 +64,11 @@ local function hide_show_params()
             if show then params:show(id) else params:hide(id) end
         end
 
+        local ivs = get_scale_ivs()
         for i = 1,12 do
             local id = 'enable_'..i..'_preset_'..pre
-            if show then params:show(id) else params:hide(id) end
+            local showdeg = i <= #ivs
+            if show and showdeg then params:show(id) else params:hide(id) end
         end
 
         if show then
@@ -95,22 +111,12 @@ local interval_names = {
 
 
 local function get_tonic()
-    return get_preset_param('tonic')
+    return get_preset_param('tonic') - 1
 end
 
-local function get_scale_idx()
-    local group = get_tuning().scales
-    local idx = get_preset_param('scale_'..group)
+tune.get_tonic = get_tonic
 
-    return idx
-end
-
-local function get_scale_ivs()
-    local group = get_tuning().scales
-    local idx = get_preset_param('scale_'..group)
-    
-    return scales[group][idx].iv
-end
+tune.get_scale_ivs = get_scale_ivs
 
 local function get_interval_enabled(i)
     return params:get('enable_'..i..'_preset_'..get_preset()) > 0
@@ -174,12 +180,12 @@ function tune.params()
         end
     }
 
-    params:add_group('toggle intervals', 12 * presets)
+    params:add_group('note toggles', 12 * presets)
     for pre = 1,presets do
         for i = 1,12 do
             params:add{
                 type = 'binary', behavior = 'toggle', 
-                id = 'enable_'..i..'_preset_'..pre, name = 'enable interval '..i,
+                id = 'enable_'..i..'_preset_'..pre, name = 'enable scale degree '..i,
                 default = 1, action = update_tuning,
             }
         end
@@ -242,7 +248,7 @@ tune.volts = function(row, column, trans, toct)
 
     if tuning.temperment == 'just' then
         return (
-            justvolts(tuning.ratios[math.abs(get_tonic()) + 1]) 
+            justvolts(tuning.ratios[get_tonic() + 1]) 
             + oct 
             + justvolts(tuning.ratios[iv[deg] + 1])
             - 1
