@@ -40,6 +40,7 @@ tune.get_preset_param = get_preset_param
 local function get_tuning()
     return tunings[get_preset_param('tuning')]
 end
+tune.get_tuning = get_tuning
 
 local function get_scale_idx()
     local group = get_tuning().scales
@@ -54,6 +55,7 @@ local function get_scale_ivs()
     
     return scales[group][idx].iv
 end
+tune.get_scale_ivs = get_scale_ivs
 
 local function hide_show_params()
     for pre = 1, presets do
@@ -116,11 +118,11 @@ end
 
 tune.get_tonic = get_tonic
 
-tune.get_scale_ivs = get_scale_ivs
 
 local function get_interval_enabled(i)
     return params:get('enable_'..i..'_preset_'..get_preset()) > 0
 end
+tune.get_interval_enabled = get_interval_enabled
 
 local function get_intervals()
     local scl = get_scale_idx()
@@ -143,6 +145,7 @@ end
 
 tune.get_intervals = intervals
 
+--TODO: add fret marks: 8ve, 8ve+5th, #+b
 function tune.params()
     params:add_separator('tuning')
 

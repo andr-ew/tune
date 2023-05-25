@@ -1,5 +1,7 @@
 local mu = require 'musicutil'
 
+--TODO: switch to chromatic default, rather than pentatonic
+
 -- import 12tet scales from musicutil
 local twelvetone = {}
 local majp, minp
