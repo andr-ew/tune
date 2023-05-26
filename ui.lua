@@ -8,19 +8,52 @@ function Tune.of_preset_param(id)
     }
 end
 
---TODO: trans & toct props, maybe
+--'A','A#','B','C','C#','D','D#','E','F','F#','G','G#'
+-- 1   2    3   4   5    6   7    8   9   10   11  12
+
+local OCT, OCT_5TH, SHARP = 1, 2, 3
+
 function Tune.grid.fretboard()
     return function(props)
         if crops.device == 'grid' and crops.mode == 'redraw' then 
             local g = crops.handler 
 
+            local ivs = tune.get_intervals()
+            -- local toct = toct or 0
+            local tonic = tune.get_tonic()
+            local pattern = tune.get_preset_param('fret_marks')
+
             for i = 1, props.size do
+                local lvl
+
                 local x, y = Grid.util.index_to_xy(props, i)
+                do
+                    local o_x = props.flow == 'right' and props.x or props.x - props.wrap
+                    local o_y = props.flow_wrap == 'up' and props.y or (
+                        props.y - (props.size//props.wrap)
+                    )
+                    local column = x - o_x + 1
+                    local row = o_y - y + 1
 
-                local v = (tune.degoct(x, y) == 1) and 1 or 0
-                local lvl = props.levels[v + 1]
+                    local deg = tune.degoct(column, row, props.trans, props.toct)
+                    local iv = ivs[deg]
+                    local n = (iv+tonic)%12+1
 
-                if lvl>0 then g:led(x, y, lvl) end
+                    local mark = (
+                        pattern == OCT and (
+                            iv == 0
+                        ) or pattern == OCT_5TH and (
+                            iv == 0 or iv == 7
+                        ) or pattern == SHARP and (
+                            n==2 or n==5 or n==7 or n==10 or n==12
+                        )
+                    )
+                    lvl = props.levels[mark and 2 or 1]
+                end
+
+                do
+                    if lvl>0 then g:led(x, y, lvl) end
+                end
             end
         end
     end

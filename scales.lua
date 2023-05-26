@@ -4,7 +4,7 @@ local mu = require 'musicutil'
 
 -- import 12tet scales from musicutil
 local twelvetone = {}
-local majp, minp
+local majp, minp, chrom
 for i,v in ipairs(mu.SCALES) do
     local scl = { name=v.name, iv = {} }
     for ii,vv in ipairs(v.intervals) do
@@ -12,11 +12,15 @@ for i,v in ipairs(mu.SCALES) do
     end
     if scl.name == 'Major Pentatonic' then majp = i end
     if scl.name == 'Minor Pentatonic' then minp = i end
+    if scl.name == 'Chromatic' then chrom = i end
     twelvetone[i] = scl
 end
 -- put major pentatonic & minor pentatonic in front
-table.insert(twelvetone, 1, table.remove(twelvetone, minp))
-table.insert(twelvetone, 1, table.remove(twelvetone, majp+1))
+-- table.insert(twelvetone, 1, table.remove(twelvetone, minp))
+-- table.insert(twelvetone, 1, table.remove(twelvetone, majp+1))
+
+-- put chromatic in front
+table.insert(twelvetone, 1, table.remove(twelvetone, chrom))
 
 -- maqam scales - could defnintely use some more !
 local maqam = {

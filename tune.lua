@@ -138,14 +138,16 @@ local function get_intervals()
 
     return some
 end
+tune.get_intervals = get_intervals
+
 
 local function get_row_tuning()
     return get_preset_param('row_tuning')
 end
 
-tune.get_intervals = intervals
+local fret_pattern_names = { '8ve', '8ve+5th', '#+b' }
+local OCT, OCT_5TH, SHARP = 1, 2, 3
 
---TODO: add fret marks: 8ve, 8ve+5th, #+b
 function tune.params()
     params:add_separator('tuning')
 
@@ -160,7 +162,7 @@ function tune.params()
     }
     add_preset_param{
         type = 'option', id = 'tonic', name = 'tonic',
-        options = tonic_names,
+        options = tonic_names, default = 4,
     }
     for group_name, _ in pairs(scales) do
         add_preset_param{
@@ -170,7 +172,7 @@ function tune.params()
     end
     add_preset_param{
         type = 'number', id = 'row_tuning', name = 'row tuning',
-        min = 1, max = 12, default = 1,
+        min = 1, max = 12, default = 6,
         formatter = function(p) 
             local iv = get_intervals()
 
@@ -181,6 +183,10 @@ function tune.params()
 
             return interval_names[interval + 1]
         end
+    }
+    add_preset_param{
+        type = 'option', id = 'fret_marks', name = 'fret marks',
+        options = fret_pattern_names, default = SHARP,
     }
 
     params:add_group('note toggles', 12 * presets)
@@ -226,8 +232,7 @@ end
 --number to be multiplied by center freq in hz
 tune.hz = function(row, column, trans, toct)
     local iv = get_intervals()
-    local toct = toct or 0
-    local deg, oct = tune.degoct(row, column, trans, toct - 5)
+    local deg, oct = tune.degoct(row, column, trans, toct)
     local tuning = get_tuning()
 
     return (
