@@ -34,13 +34,24 @@ tune.get_preset = get_preset
 local function get_preset_param(id)
     return params:get(id..'_preset_'..get_preset())
 end
-
 tune.get_preset_param = get_preset_param
+
+local function get_preset_param_id(id)
+    return id..'_preset_'..get_preset()
+end
+tune.get_preset_param_id = get_preset_param_id
 
 local function get_tuning()
     return tunings[get_preset_param('tuning')]
 end
 tune.get_tuning = get_tuning
+
+local function get_scale_param_id()
+    local group = get_tuning().scales
+
+    return get_preset_param_id('scale_'..group)
+end
+tune.get_scale_param_id = get_scale_param_id
 
 local function get_scale_idx()
     local group = get_tuning().scales
