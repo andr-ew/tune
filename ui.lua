@@ -32,8 +32,8 @@ function Tune.grid.fretboard()
                     local o_y = props.flow_wrap == 'up' and props.y or (
                         props.y - (props.size//props.wrap)
                     )
-                    local column = x - o_x + 1
-                    local row = o_y - y + 1
+                    local column = x - o_x + 1 + (props.column_offset or 0)
+                    local row = o_y - y + 1 + (props.row_offset or 0)
 
                     local deg = tune.degoct(column, row, props.trans, props.toct)
                     local iv = ivs[deg]
