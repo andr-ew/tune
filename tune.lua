@@ -113,7 +113,36 @@ local function add_preset_param(args)
     end
 end
 
-local tonic_names = { 'A','A#','B','C','C#','D','D#','E','F','F#','G','G#', }
+local tonic_names = {
+    [-9] = 'C'
+    [-8] = 'C#',
+    [-7] = 'D',
+    [-6] = 'D#',
+    [-5] = 'E',
+    [-4] = 'F',
+    [-3] = 'F#',
+    [-2] = 'G',
+    [-1] = 'G#', 
+    [0] = 'A',
+    [1] = 'A#',
+    [2] = 'B',
+    [3] = 'C',
+    [4] = 'C#',
+    [5] = 'D',
+    [6] = 'D#',
+    [7] = 'E',
+    [8] = 'F',
+    [9] = 'F#',
+    [10] = 'G',
+    [11] = 'G#', 
+    [12] = 'A',
+    [13] = 'A#'
+    [14] = 'B',
+}
+tune.tonic_names = tonic_names
+
+local seman_cinot = tab.invert(tonic_names)
+
 local interval_names = {
     'octaves',
     "min 2nds", "maj 2nds",
@@ -124,7 +153,7 @@ local interval_names = {
 
 
 local function get_tonic()
-    return get_preset_param('tonic') - 1
+    return get_preset_param('tonic')
 end
 
 tune.get_tonic = get_tonic

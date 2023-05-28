@@ -78,10 +78,14 @@ local function to_frac(num)
 end
 
 local kb = {}
-kb.grid = {
-      { 05, 07, 00, 10, 12, 02, },
-    { 04, 06, 08, 09, 11, 01, 03, }
-}
+do
+    --TODO: add lower octave
+    local __ = nil
+    kb.grid = {
+          { 04, 06, __, 09, 11, 13, },
+        { 03, 05, 07, 08, 10, 12, 14, }
+    }
+end
 kb.pos = {}
 for i = 1,12 do
     for y = 1,2 do
