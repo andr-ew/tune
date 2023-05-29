@@ -114,7 +114,7 @@ local function add_preset_param(args)
 end
 
 local tonic_names = {
-    [-9] = 'C'
+    [-9] = 'C',
     [-8] = 'C#',
     [-7] = 'D',
     [-6] = 'D#',
@@ -136,12 +136,12 @@ local tonic_names = {
     [10] = 'G',
     [11] = 'G#', 
     [12] = 'A',
-    [13] = 'A#'
+    [13] = 'A#',
     [14] = 'B',
 }
 tune.tonic_names = tonic_names
 
-local seman_cinot = tab.invert(tonic_names)
+-- local seman_cinot = tab.invert(tonic_names)
 
 local interval_names = {
     'octaves',
@@ -201,8 +201,11 @@ function tune.params()
         options = tuning_names,
     }
     add_preset_param{
-        type = 'option', id = 'tonic', name = 'tonic',
-        options = tonic_names, default = 4,
+        type = 'number', id = 'tonic', name = 'tonic',
+        default = 3, min = -9, max = 14,
+        formatter = function(p) 
+            return tonic_names[p:get()]
+        end
     }
     for group_name, _ in pairs(scales) do
         add_preset_param{
@@ -296,7 +299,7 @@ tune.volts = function(row, column, trans, toct)
 
     if tuning.temperment == 'just' then
         return (
-            justvolts(tuning.ratios[get_tonic() + 1]) 
+            justvolts(tuning.ratios[get_tonic() % 12 + 1]) 
             + oct 
             + justvolts(tuning.ratios[iv[deg] + 1])
             - 1

@@ -79,17 +79,17 @@ end
 
 local kb = {}
 do
-    --TODO: add lower octave
+    --TODO: add other octave
     local __ = nil
     kb.grid = {
-          { 04, 06, __, 09, 11, 13, },
-        { 03, 05, 07, 08, 10, 12, 14, }
+          { -8, -6, __, -3, -1, 01, __, 04, 06, __, 09, 11, 13, },
+        { -9, -7, -5, -4, -2, 00, 02, 03, 05, 07, 08, 10, 12, 14, }
     }
 end
 kb.pos = {}
-for i = 1,12 do
+for i = -9,14 do
     for y = 1,2 do
-        for x,v in ipairs(kb.grid[y]) do
+        for x,v in pairs(kb.grid[y]) do
             if i == v then
                 kb.pos[i] = { x=x, y=y }
                 kb.pos[i+0.5] = { x=x, y=y }
@@ -106,7 +106,7 @@ function Tune.grid.tonic()
             if crops.mode == 'input' then
                 local x, y, z = table.unpack(crops.args)
 
-                for i = 1,12 do
+                for i = -9,14 do
                     if 
                         z == 1 
                         and x == (left + kb.pos[i].x - 1) 
@@ -119,7 +119,7 @@ function Tune.grid.tonic()
             elseif crops.mode == 'redraw' then
                 local g = crops.handler 
 
-                for i = 1,12 do
+                for i = -9,14 do
                     local v = crops.get_state(props.state) or 1
                     local pos = kb.pos[i]
                     local lvl = props.levels[(v == i) and 2 or 1]
@@ -138,7 +138,7 @@ function Tune.grid.scale_degrees_background()
             local left, top = props.left or 1, props.top or 1
             local lvl = props.level
 
-            for i = 1,12 do
+            for i = -9,2 do
                 local pos = kb.pos[i]
 
                 if lvl>0 then g:led(left + pos.x - 1, top + pos.y - 1, lvl) end
@@ -157,15 +157,17 @@ function Tune.grid.scale_degree()
             local iv = ivs[deg]
 
             if iv then
-                local i = (math.floor(iv) + tune.get_tonic()) % 12 + 1
+                local i = (math.floor(iv) + tune.get_tonic()) % 12
+                local ii = i
+                if ii > 2.5 then ii = ii - 12 end
 
                 if crops.mode == 'input' then
                     local x, y, z = table.unpack(crops.args)
 
                     if 
                         z == 1 
-                        and x == (left + kb.pos[i].x - 1) 
-                        and y == (top + kb.pos[i].y - 1) 
+                        and x == (left + kb.pos[ii].x - 1) 
+                        and y == (top + kb.pos[ii].y - 1) 
                     then
                         local v = crops.get_state(props.state) or 0
 
@@ -175,7 +177,7 @@ function Tune.grid.scale_degree()
                     local g = crops.handler 
 
                     local v = crops.get_state(props.state) or 0
-                    local pos = kb.pos[i]
+                    local pos = kb.pos[ii]
                     local lvl = props.levels[v + 1]
 
                     if lvl>0 then g:led(left + pos.x - 1, top + pos.y - 1, lvl) end
@@ -210,10 +212,13 @@ function Tune.screen.scale_degrees()
     return function(props)
         for i = #_notes, 1, -1 do
             local _note = _notes[i]
-            local ii = i/2 + 0.5
+            local ii = i/2 + 0.5 - 1
 
             local mul = 10
-            local p = kb.pos[ii]
+
+            local iii = ii
+            if iii > 2.5 then iii = iii - 12 end
+            local p = kb.pos[iii]
             local xx = props.x + (p.x - 1) * 20
             local yy = props.y + (p.y - 1) * 10
 
@@ -221,7 +226,7 @@ function Tune.screen.scale_degrees()
             local ji = tuning.temperment == 'just'
             local ivs = tune.get_scale_ivs()
             local tonic = tune.get_tonic()
-            local iv = (ii-1-tonic)%12
+            local iv = (ii-tonic)%12
             local st = (iv+tonic)%12+1
             local deg = tab.key(ivs, iv)
 
