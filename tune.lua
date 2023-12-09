@@ -1,12 +1,13 @@
 local tune = {}
 
-local tunings, scales, presets
+local tunings, scales, presets, tracks
 local tuning_names, scale_names = {}, {}
 local action = function() end
 
 function tune.setup(args)
     tunings = args.tunings or {}
     scales = args.scale_groups or {}
+    tracks = args.tracks or 4
     presets = args.presets or 8
     action = args.action or function() end
 
@@ -25,71 +26,80 @@ end
 
 local param_ids = {}
 
-local function get_preset()
-    return params:get('tuning_preset')
+local function get_track_param(track, id)
+    return params:get(id..'_track_'..track)
 end
+tune.get_track_param = get_track_param
 
+local function get_track_param_id(track, id)
+    return id..'_track_'..track
+end
+tune.get_track_param_id = get_track_param_id
+
+local function get_preset(track)
+    return get_track_param(track, 'tuning_preset')
+end
 tune.get_preset = get_preset
 
-local function get_preset_param(id)
-    return params:get(id..'_preset_'..get_preset())
+local function get_preset_param(track, id, pre)
+    return get_track_param(track, id..'_preset_'..(pre or get_preset(track)))
 end
 tune.get_preset_param = get_preset_param
 
-local function get_preset_param_id(id)
-    return id..'_preset_'..get_preset()
+local function get_preset_param_id(track, id, pre)
+    return get_track_param_id(track, id..'_preset_'..(pre or get_preset(track)))
 end
 tune.get_preset_param_id = get_preset_param_id
 
-local function get_tuning()
-    return tunings[get_preset_param('tuning')]
+local function get_tuning(track)
+    return tunings[get_preset_param(track, 'tuning')]
 end
 tune.get_tuning = get_tuning
 
-local function get_scale_param_id()
-    local group = get_tuning().scales
+local function get_scale_param_id(track, id)
+    local group = get_tuning(track).scales
 
-    return get_preset_param_id('scale_'..group)
+    return get_preset_param_id(track, 'scale_'..group)
 end
 tune.get_scale_param_id = get_scale_param_id
 
-local function get_scale_idx()
-    local group = get_tuning().scales
-    local idx = get_preset_param('scale_'..group)
+local function get_scale_idx(track)
+    local group = get_tuning(track).scales
+    local idx = get_preset_param(track, 'scale_'..group)
 
     return idx
 end
 
-local function get_scale_ivs()
-    local group = get_tuning().scales
-    local idx = get_preset_param('scale_'..group)
+local function get_scale_ivs(track)
+    local group = get_tuning(track).scales
+    local idx = get_preset_param(track, 'scale_'..group)
     
     return scales[group][idx].iv
 end
 tune.get_scale_ivs = get_scale_ivs
 
-local function hide_show_params()
+local function hide_show_params(track)
     for pre = 1, presets do
         local show = params:get('tuning_preset') == pre
 
         for _,base in ipairs(param_ids) do
-            local id = base..'_preset_'..pre
+            local id = get_preset_param_id(track, base, pre)
             if show then params:show(id) else params:hide(id) end
         end
 
-        local ivs = get_scale_ivs()
+        local ivs = get_scale_ivs(track)
         for i = 1,12 do
-            local id = 'enable_'..i..'_preset_'..pre
+            local id = get_preset_param_id(track, 'enable_'..i, pre)
             local showdeg = i <= #ivs
             if show and showdeg then params:show(id) else params:hide(id) end
         end
 
         if show then
-            local group = get_tuning().scales
+            local group = get_tuning(track).scales
     
             for group_name, _ in pairs(scales) do
                 local showgroup = group_name == group
-                local id = 'scale_'..group_name..'_preset_'..pre
+                local id = get_preset_param_id(track, 'scale_'..group_name, pre)
                 if showgroup then params:show(id) else params:hide(id) end
             end
         end
@@ -97,9 +107,9 @@ local function hide_show_params()
     _menu.rebuild_params() --questionable?
 end
 
-local function update_tuning()
-    hide_show_params()
-    action()
+local function update_tuning(track)
+    hide_show_params(track)
+    action(track)
 end
 
 local function add_preset_param(args)
