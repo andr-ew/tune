@@ -1,7 +1,7 @@
 local Tune = { grid = {}, screen = {} }
 
-function Tune.of_preset_param(id)
-    local p_id = id..'_preset_'..tune.get_preset()
+function Tune.of_param(tune, id)
+    local p_id = tune:get_param_id(id)
     return {
         params:get(p_id),
         params.set, params, p_id
@@ -16,12 +16,14 @@ local OCT, OCT_5TH, SHARP = 1, 2, 3
 function Tune.grid.fretboard()
     return function(props)
         if crops.device == 'grid' and crops.mode == 'redraw' then 
+            local tune = props.tune
+
             local g = crops.handler 
 
-            local ivs = tune.get_intervals()
+            local ivs = tune:get_intervals()
             -- local toct = toct or 0
-            local tonic = tune.get_tonic()
-            local pattern = tune.get_preset_param('fret_marks')
+            local tonic = tune:get_tonic()
+            local pattern = tune:get_param('fret_marks')
 
             for i = 1, props.size do
                 local lvl
@@ -35,7 +37,7 @@ function Tune.grid.fretboard()
                     local column = x - o_x + 1 + (props.column_offset or 0)
                     local row = o_y - y + 1 + (props.row_offset or 0)
 
-                    local deg = tune.degoct(column, row, props.trans, props.toct)
+                    local deg = tune:degoct(column, row, props.trans, props.toct)
                     local iv = ivs[deg]
                     local n = (iv+tonic)%12+1
 
@@ -152,12 +154,13 @@ function Tune.grid.scale_degree()
         if crops.device == 'grid' then 
             local left, top = props.left or 1, props.top or 1
 
+            local tune = props.tune
             local deg = props.degree
-            local ivs = tune.get_scale_ivs()
+            local ivs = tune:get_scale_ivs()
             local iv = ivs[deg]
 
             if iv then
-                local i = (math.floor(iv) + tune.get_tonic()) % 12
+                local i = (math.floor(iv) + tune:get_tonic()) % 12
                 local ii = i
                 if ii > 2.5 then ii = ii - 12 end
 
@@ -210,6 +213,8 @@ function Tune.screen.scale_degrees()
     for i = 1, 24 do _notes[i] = Produce.screen.text_highlight() end
 
     return function(props)
+        local tune = props.tune
+
         for i = #_notes, 1, -1 do
             local _note = _notes[i]
             local ii = i/2 + 0.5 - 1
@@ -222,16 +227,16 @@ function Tune.screen.scale_degrees()
             local xx = props.x + (p.x - 1) * 20
             local yy = props.y + (p.y - 1) * 10
 
-            local tuning = tune.get_tuning()
+            local tuning = tune:get_tuning()
             local ji = tuning.temperment == 'just'
-            local ivs = tune.get_scale_ivs()
-            local tonic = tune.get_tonic()
+            local ivs = tune:get_scale_ivs()
+            local tonic = tune:get_tonic()
             local iv = (ii-tonic)%12
             local st = (iv+tonic)%12+1
             local deg = tab.key(ivs, iv)
 
             local is_interval = tab.contains(ivs, iv)
-            local is_enabled = deg and tune.get_interval_enabled(deg)
+            local is_enabled = deg and tune:get_interval_enabled(deg)
             local is_tonic = iv==0
 
             _note{
