@@ -5,6 +5,17 @@ tune.__index = tune
 -- local tuning_names, scale_names = {}, {}
 -- local action = function() end
 
+function tune.add_global_params(action)
+    params:add{
+        type = 'number', id = 'base_tonic', name = 'base key',
+        default = 3, min = 0, max = 11,
+        formatter = function(p) 
+            return tune.tonic_names[p:get()]
+        end,
+        action = action,
+    }
+end
+
 function tune.new(args)
     local self = {}
     setmetatable(self, tune)
@@ -120,6 +131,9 @@ function tune:add_param(args)
 end
 
 local tonic_names = {
+    [-12] = 'A',
+    [-11] = 'A#',
+    [-10] = 'B',
     [-9] = 'C',
     [-8] = 'C#',
     [-7] = 'D',
@@ -144,6 +158,15 @@ local tonic_names = {
     [12] = 'A',
     [13] = 'A#',
     [14] = 'B',
+    [15] = 'C',
+    [16] = 'C#',
+    [17] = 'D',
+    [18] = 'D#',
+    [19] = 'E',
+    [20] = 'F',
+    [21] = 'F#',
+    [22] = 'G',
+    [23] = 'G#', 
 }
 tune.tonic_names = tonic_names
 
@@ -159,7 +182,7 @@ local interval_names = {
 
 
 function tune:get_tonic()
-    return self:get_param('tonic')
+    return self:get_param('tonic') + params:get('base_tonic')
 end
 
 
@@ -189,7 +212,6 @@ end
 local fret_pattern_names = { '8ve', '8ve+5th', '#+b' }
 local OCT, OCT_5TH, SHARP = 1, 2, 3
 
-
 function tune:add_params(separator_name)
     local param_count = 2 + #self.scales + 2 + 12 + 2
 
@@ -211,11 +233,12 @@ function tune:add_params(separator_name)
     }
     self:add_param{
         type = 'number', id = 'tonic', name = 'tonic',
-        default = 3, min = -9, max = 14,
+        default = 0, min = -9, max = 9,
         formatter = function(p) 
-            return tonic_names[p:get()]
+            return tonic_names[self:get_tonic()]
         end
     }
+    --TODO: base key
     for group_name, _ in pairs(self.scales) do
         self:add_param{
             type = 'option', id = 'scale_'..group_name, name = 'scale',
