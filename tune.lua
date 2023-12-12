@@ -302,7 +302,7 @@ end
 --     return tune.degoct(row, column, trans) == 1
 -- end
 
---number to be multiplied by center freq in hz
+--number to be multiplied by reference A in hz
 function tune:hz(row, column, trans, toct)
     local iv = self:get_intervals()
     local deg, oct = self:degoct(row, column, trans, toct)
@@ -343,7 +343,12 @@ function tune:volts(row, column, trans, toct)
     end
 end
 
---TODO
-function tune:midi() end
+--number to be added to referece A
+function tune:midi(row, column, trans, toct) 
+    local iv = self:get_intervals()
+    local deg, oct = self:degoct(row, column, trans, toct)
+
+    return self:get_tonic() + (oct * 12) + iv[deg]
+end
 
 return tune
