@@ -102,11 +102,15 @@ end
 kb.pos_octs = {}
 for i = -12, -1 do
     kb.pos_octs[i] = {}
+    kb.pos_octs[i + 0.5] = {}
     kb.pos_octs[i + 12] = {}
+    kb.pos_octs[i + 12 + 0.5] = {}
     for oct = 0,2 do
         local i_o = oct*12 + i
         kb.pos_octs[i][oct + 1] = kb.pos[i_o]
+        kb.pos_octs[i + 0.5][oct + 1] = kb.pos[i_o]
         kb.pos_octs[i + 12][oct + 1] = kb.pos[i_o]
+        kb.pos_octs[i + 12 + 0.5][oct + 1] = kb.pos[i_o]
     end
 end
 
@@ -247,23 +251,24 @@ function Tune.screen.scale_degrees()
 
     return function(props)
         local tune = props.tune
+            
+        local left, top = props.x or 1, props.y or 1
+        local base = params:get('base_tonic')
+        local tuning = tune:get_tuning()
+        local ji = tuning.temperment == 'just'
+        local ivs = tune:get_scale_ivs()
+        local tonic = tune:get_tonic()
 
         for i = #_notes, 1, -1 do
             local _note = _notes[i]
             local ii = i/2 + 0.5 - 1
 
-            local mul = 10
+            -- local iii = ii
+            -- if iii > 2.5 then iii = iii - 12 end
+            -- local p = kb.pos[iii]
+            -- local xx = props.x + (p.x - 1) * 20
+            -- local yy = props.y + (p.y - 1) * 10
 
-            local iii = ii
-            if iii > 2.5 then iii = iii - 12 end
-            local p = kb.pos[iii]
-            local xx = props.x + (p.x - 1) * 20
-            local yy = props.y + (p.y - 1) * 10
-
-            local tuning = tune:get_tuning()
-            local ji = tuning.temperment == 'just'
-            local ivs = tune:get_scale_ivs()
-            local tonic = tune:get_tonic()
             local iv = (ii-tonic)%12
             local st = (iv+tonic)%12+1
             local deg = tab.key(ivs, iv)
@@ -272,28 +277,25 @@ function Tune.screen.scale_degrees()
             local is_enabled = deg and tune:get_interval_enabled(deg)
             local is_tonic = iv==0
 
-            _note{
-                x = xx, y = yy, 
-                padding = 1.5,
-                font_face = 2,
-                nudge = true, squish = true,
-                levels = {
-                    is_tonic and 0 or (is_interval and is_enabled) and 15  or 2,
-                    (is_interval and is_enabled and is_tonic) and 10  or 0
-                },
-                text = (
-                    is_interval and (  
-                        ji and (
-                            string.format(
-                                "%d/%d",
-                                to_frac(tuning.ratios[iv+1])
-                            )
-                        ) or (
-                            note_names[st]
-                        )
-                    ) or '.'
-                )
-            }
+            for oct, pos in ipairs(kb.pos_octs[ii]) do
+                local d = pos.x - (base//2) - 3
+                local xx = left + d*10
+                local yy = top + (pos.y - 1)*10
+
+                _note{
+                    x = xx, y = yy,
+                    padding = 1.5,
+                    font_face = 2,
+                    nudge = true, squish = true,
+                    levels = {
+                        is_tonic and 0 or (is_interval and is_enabled) and 15  or 2,
+                        (is_interval and is_enabled and is_tonic) and 10  or 0
+                    },
+                    text = (
+                        is_interval and (note_names[st]) or '.'
+                    )
+                }
+            end
         end
     end
 end
