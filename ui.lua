@@ -61,24 +61,6 @@ function Tune.grid.fretboard()
     end
 end
 
--- https://stackoverflow.com/questions/43565484/how-do-you-take-a-decimal-to-a-fraction-in-lua-with-no-added-libraries
-local function to_frac(num)
-    local W = math.floor(num)
-    local F = num - W
-    local pn, n, N = 0, 1
-    local pd, d, D = 1, 0
-    local x, err, q, Q
-    repeat
-        x = x and 1 / (x - q) or F
-        q, Q = math.floor(x), math.floor(x + 0.5)
-        pn, n, N = n, q*n + pn, Q*n + pn
-        pd, d, D = d, q*d + pd, Q*d + pd
-        err = F - N/D
-   until math.abs(err) < 1e-15
-
-   return N + D*W, D, err
-end
-
 -- local 
 kb = {}
 do
@@ -125,13 +107,13 @@ function Tune.grid.tonic()
 
                 for i = -11,11 do
                     local pos = kb.pos[i + base]
-                    local d = pos.x - (base//2) - 3
+                    local d = pos.x - (base//2) - props.nudge
 
                     if
                         z == 1 
                         and x == left + d 
                         and y == top + pos.y - 1 
-                        and d >= 0 and d <= 11
+                        and d >= 0 and d < props.width
                     then
                         crops.set_state(props.state, i)
                         break
@@ -144,11 +126,11 @@ function Tune.grid.tonic()
                     local v = crops.get_state(props.state) or 1
                     local pos = kb.pos[i + base]
                     local lvl = props.levels[(v == i) and 2 or 1]
-                    local d = pos.x - (base//2) - 3
+                    local d = pos.x - (base//2) - props.nudge
                     local x = left + d
                     local y = top + pos.y - 1
 
-                    if lvl>0 and d >= 0 and d <= 11 then g:led(x, y, lvl) end
+                    if lvl>0 and d >= 0 and d < props.width then g:led(x, y, lvl) end
                 end
             end
         end
@@ -165,11 +147,11 @@ function Tune.grid.scale_degrees_background()
 
             for i = -11,11 do
                 local pos = kb.pos[i + base]
-                local d = pos.x - (base//2) - 3
+                local d = pos.x - (base//2) - props.nudge
                 local x = left + d
                 local y = top + pos.y - 1
 
-                if lvl>0 and d >= 0 and d <= 11 then g:led(x, y, lvl) end
+                if lvl>0 and d >= 0 and d < props.width then g:led(x, y, lvl) end
             end
         end
     end
@@ -195,12 +177,12 @@ function Tune.grid.scale_degree()
                     local x, y, z = table.unpack(crops.args)
 
                     for oct, pos in ipairs(kb.pos_octs[ii]) do 
-                        local d = pos.x - (base//2) - 3
+                        local d = pos.x - (base//2) - props.nudge
                         if 
                             z == 1 
                             and x == left + d 
                             and y == top + pos.y - 1 
-                            and d >= 0 and d <= 11
+                            and d >= 0 and d < props.width
                         then
                             local v = crops.get_state(props.state) or 0
 
@@ -215,11 +197,11 @@ function Tune.grid.scale_degree()
                     local lvl = props.levels[v + 1]
 
                     if lvl>0 then for oct, pos in ipairs(kb.pos_octs[ii]) do
-                        local d = pos.x - (base//2) - 3
+                        local d = pos.x - (base//2) - props.nudge
                         local x = left + d
                         local y = top + pos.y - 1
 
-                        if d >= 0 and d <= 11 then g:led(x, y, lvl) end
+                        if d >= 0 and d < props.width then g:led(x, y, lvl) end
                     end end
                 end
             end
@@ -263,12 +245,6 @@ function Tune.screen.scale_degrees()
             local _note = _notes[i]
             local ii = i/2 + 0.5 - 1
 
-            -- local iii = ii
-            -- if iii > 2.5 then iii = iii - 12 end
-            -- local p = kb.pos[iii]
-            -- local xx = props.x + (p.x - 1) * 20
-            -- local yy = props.y + (p.y - 1) * 10
-
             local iv = (ii-tonic)%12
             local st = (iv+tonic)%12+1
             local deg = tab.key(ivs, iv)
@@ -278,23 +254,25 @@ function Tune.screen.scale_degrees()
             local is_tonic = iv==0
 
             for oct, pos in ipairs(kb.pos_octs[ii]) do
-                local d = pos.x - (base//2) - 3
+                local d = pos.x - (base//2) - props.nudge
                 local xx = left + d*10
                 local yy = top + (pos.y - 1)*10
-
-                _note{
-                    x = xx, y = yy,
-                    padding = 1.5,
-                    font_face = 2,
-                    nudge = true, squish = true,
-                    levels = {
-                        is_tonic and 0 or (is_interval and is_enabled) and 15  or 2,
-                        (is_interval and is_enabled and is_tonic) and 10  or 0
-                    },
-                    text = (
-                        is_interval and (note_names[st]) or '.'
-                    )
-                }
+                
+                if d >= 0 and d < props.width then
+                    _note{
+                        x = xx, y = yy,
+                        padding = 1.5,
+                        font_face = 2,
+                        nudge = true, squish = true,
+                        levels = {
+                            is_tonic and 0 or (is_interval and is_enabled) and 15  or 2,
+                            (is_interval and is_enabled and is_tonic) and 10  or 0
+                        },
+                        text = (
+                            is_interval and (note_names[st]) or '.'
+                        )
+                    }
+                end
             end
         end
     end

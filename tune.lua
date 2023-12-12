@@ -233,7 +233,7 @@ function tune:add_params(separator_name)
     }
     self:add_param{
         type = 'number', id = 'tonic', name = 'tonic',
-        default = 0, min = -9, max = 9,
+        default = 0, min = -10, max = 10,
         formatter = function(p) 
             return tonic_names[self:get_tonic()]
         end
