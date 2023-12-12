@@ -15,12 +15,12 @@ for i,v in ipairs(mu.SCALES) do
     if scl.name == 'Chromatic' then chrom = i end
     twelvetone[i] = scl
 end
--- put major pentatonic & minor pentatonic in front
--- table.insert(twelvetone, 1, table.remove(twelvetone, minp))
--- table.insert(twelvetone, 1, table.remove(twelvetone, majp+1))
-
 -- put chromatic in front
-table.insert(twelvetone, 1, table.remove(twelvetone, chrom))
+-- table.insert(twelvetone, 1, table.remove(twelvetone, chrom))
+
+-- put major pentatonic & minor pentatonic in front
+table.insert(twelvetone, 1, table.remove(twelvetone, minp))
+table.insert(twelvetone, 1, table.remove(twelvetone, majp+1))
 
 -- maqam scales - could defnintely use some more !
 local maqam = {

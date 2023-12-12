@@ -247,7 +247,7 @@ function tune:add_params(separator_name)
     end
     self:add_param{
         type = 'number', id = 'row_tuning', name = 'row tuning',
-        min = 1, max = 12, default = 6,
+        min = 1, max = 12, default = 1,
         formatter = function(p) 
             local iv = self:get_intervals()
 
@@ -261,7 +261,7 @@ function tune:add_params(separator_name)
     }
     self:add_param{
         type = 'option', id = 'fret_marks', name = 'fret marks',
-        options = fret_pattern_names, default = SHARP,
+        options = fret_pattern_names, default = OCT,
     }
 
     -- params:add_group(self:get_param_id('note_toggles'), 'note toggles', 12)
