@@ -321,6 +321,7 @@ end
 local JIVOLT = 1 / math.log(2)
 local function justvolts(f) return math.log(f) * JIVOLT end
 
+--0v == A
 function tune:volts(row, column, trans, toct) 
     local iv = self:get_intervals()
     local toct = toct or 0
