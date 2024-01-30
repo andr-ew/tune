@@ -113,7 +113,7 @@ function tune:hide_show_params()
         end
     end
 
-    _menu.rebuild_params() --questionable?
+    --_menu.rebuild_params() --questionable?
 end
 
 function tune:update_tuning()
