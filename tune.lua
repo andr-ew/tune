@@ -170,15 +170,12 @@ function tune:add_params(separator_name)
         params:add_group('tuning_grp_'..self.id, separator_name, param_count) 
     end
 
-    -- params:add{
-    --     type = 'number', id = 'tuning_preset', name = 'preset',
-    --     min = 1, max = presets, default = 1, action = update_tuning,
-    -- }
-
     self:add_param{
         type = 'option', id = 'tuning', name = 'tuning',
         options = self.tuning_names,
     }
+
+    --TODO: update tonic & base key to work in 5ths
     self:add_param{
         type = 'number', id = 'tonic', name = 'tonic',
         default = 0, min = -10, max = 10,
@@ -186,13 +183,6 @@ function tune:add_params(separator_name)
             return tonic_names[self:get_tonic()]
         end
     }
-    --TODO: base key
-    -- for group_name, _ in pairs(self.scales) do
-    --     self:add_param{
-    --         type = 'option', id = 'scale_'..group_name, name = 'scale',
-    --         options = self.scale_names[group_name],
-    --     }
-    -- end
     self:add_param{
         type = 'option', id = 'scale_class', name = 'scale class',
         options = class_names,
