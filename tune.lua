@@ -18,6 +18,8 @@ end
 
 local class_names = { 'heptatonic', 'pentatonic' }
 
+tune.class_names = class_names
+
 function tune.new(args)
     local self = {}
     setmetatable(self, tune)

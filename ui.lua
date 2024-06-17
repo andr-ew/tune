@@ -20,12 +20,6 @@ function Tune.grid.fretboard()
 
             local g = crops.handler 
 
-            local ivs = tune:get_intervals()
-            -- local toct = toct or 0
-            local tonic = tune:get_tonic()
-            -- local pattern = tune:get_param('fret_marks')
-            local pattern = OCT 
-
             for i = 1, props.size do
                 local lvl
 
@@ -35,22 +29,13 @@ function Tune.grid.fretboard()
                     local o_y = props.flow_wrap == 'up' and props.y or (
                         props.y - (props.size//props.wrap)
                     )
-                    local column = x - o_x + 1 + (props.column_offset or 0)
-                    local row = o_y - y + 1 + (props.row_offset or 0)
+                    local column = x - o_x
 
-                    local deg = tune:degoct(column, row, props.trans, props.toct)
-                    local iv = ivs[deg]
-                    local n = (iv+tonic)%12+1
-
-                    local mark = (
-                        pattern == OCT and (
-                            iv == 0
-                        ) or pattern == OCT_5TH and (
-                            iv == 0 or iv == 7
-                        ) or pattern == SHARP and (
-                            n==2 or n==5 or n==7 or n==10 or n==12
-                        )
+                    mark = (
+                        (props.heptatonic and (column%7 == 0))
+                        or (props.pentatonic and (column%5 == 0))
                     )
+
                     lvl = props.levels[mark and 2 or 1]
                 end
 
