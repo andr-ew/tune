@@ -29,8 +29,10 @@ local pentatonic = {
     { name = 'gōng', iv = mode(major_pentatonic, 1) },
     { name = 'shāng', iv = mode(major_pentatonic, 2) },
     { name = 'jué', iv = mode(major_pentatonic, 3) },
+    { name = '--', iv = mode(major_pentatonic, 3) },
     { name = 'zhǐ', iv = mode(major_pentatonic, 4) },
     { name = 'yǔ', iv = mode(major_pentatonic, 5) },
+    { name = '--', iv = mode(major_pentatonic, 5) },
 }
 
 -- maqam scales - could defnintely use some more !
@@ -40,16 +42,19 @@ local maqam = {
     { name = 'Bayati Shuri', iv = { 0, 1.5, 3, 5, 6, 9.5, 10, }},
     { name = 'Hijaz (Jins Nahawand)', iv = { 0, 1, 4, 5, 7, 8, 10, }},
     { name = 'Hijaz (Jins Rast)', iv = { 0, 1, 4, 5, 7, 8.5, 10, }},
+    { name = 'Hijaz (Jins Nahawand)', iv = { 0, 1, 4, 5, 7, 8, 10, }},
+    { name = 'Hijaz (Jins Rast)', iv = { 0, 1, 4, 5, 7, 8.5, 10, }},
 }
 
--- local scale_groups = {
---     ['12 tone'] = { heptatonic = heptatonic, pentatonic = pentatonic, },
---     ['maqam'] = { heptatonic = maqam },
--- }
 local scale_groups = {
-    ['12 tone'] = heptatonic,
-    ['maqam'] = maqam,
+                   -- important: each of these tables must have exactly 7 elements
+    ['12 tone'] = { heptatonic = heptatonic, pentatonic = pentatonic, },
+    ['maqam'] = { heptatonic = maqam, pentatonic = maqam },
 }
+-- local scale_groups = {
+--     ['12 tone'] = heptatonic,
+--     ['maqam'] = maqam,
+-- }
 
 local tunings = {
     { name='12tet', temperment = 'equal', tones = 12, scales = '12 tone' },

@@ -16,6 +16,8 @@ function tune.add_global_params(action)
     }
 end
 
+local class_names = { 'heptatonic', 'pentatonic' }
+
 function tune.new(args)
     local self = {}
     setmetatable(self, tune)
@@ -29,19 +31,21 @@ function tune.new(args)
     self.visibility_condition = args.visibility_condition or function() return true end
 
     self.tuning_names = {}
-    self.scale_names = {}
+    -- self.scale_names = {}
 
     for i,tuning in ipairs(self.tunings) do
         self.tuning_names[i] = tuning.name
     end
 
-    for k,group in pairs(self.scales) do
-        self.scale_names[k] = {}
+    -- for k,group in pairs(self.scales) do
+    --     self.scale_names[k] = {}
 
-        for i,scale in ipairs(group) do
-            self.scale_names[k][i] = scale.name
-        end
-    end
+    --     for class_name,class in pairs(group) do
+    --         for i,scale in ipairs(class) do
+    --             self.scale_names[k][class_name][i] = scale.name
+    --         end
+    --     end
+    -- end
 
     self.param_ids = {}
 
@@ -60,64 +64,21 @@ function tune:get_tuning()
     return self.tunings[self:get_param('tuning')]
 end
 
-function tune:get_scale_param_id()
-    local group = self:get_tuning().scales
-
-    return self:get_param_id('scale_'..group)
-end
-
 function tune:get_scale_idx()
-    local group = self:get_tuning().scales
-    local idx = self:get_param('scale_'..group)
+    local idx = self:get_param('scale')
 
     return idx
 end
 
 function tune:get_scale_ivs()
     local group = self:get_tuning().scales
-    local idx = self:get_param('scale_'..group)
-    
-    return self.scales[group][idx].iv
-end
+    local class = class_names[self:get_param('scale_class')]
+    local idx = self:get_param('scale')
 
-function tune:hide_show_params()
-    local show = self.visibility_condition(self)
-
-    if self.add_param_separator then 
-        local id = 'tuning_sep_'..self.id
-        if show then params:show(id) else params:hide(id) end
-    elseif self.add_param_group then 
-        local id = 'tuning_grp_'..self.id
-        if show then params:show(id) else params:hide(id) end
-    end
-
-    for _,base in ipairs(self.param_ids) do
-        local id = self:get_param_id(base)
-        if show then params:show(id) else params:hide(id) end
-    end
-
-    local ivs = self:get_scale_ivs()
-    for i = 1,12 do
-        local id = self:get_param_id('enable_'..i)
-        local showdeg = i <= #ivs
-        if show and showdeg then params:show(id) else params:hide(id) end
-    end
-
-    if show then
-        local group = self:get_tuning().scales
-
-        for group_name, _ in pairs(self.scales) do
-            local showgroup = group_name == group
-            local id = self:get_param_id('scale_'..group_name)
-            if showgroup then params:show(id) else params:hide(id) end
-        end
-    end
-
-    --_menu.rebuild_params() --questionable?
+    return self.scales[group][class][idx].iv
 end
 
 function tune:update_tuning()
-    self:hide_show_params()
     self.action()
 end
 
@@ -191,29 +152,14 @@ function tune:get_interval_enabled(i)
 end
 
 function tune:get_intervals()
-    local scl = self:get_scale_idx()
-    local all = self:get_scale_ivs()
-
-    local some = {}
-    for i,v in ipairs(all) do
-        if self:get_interval_enabled(i) then 
-            table.insert(some, v)
-        end
-    end
-    if #some == 0 then table.insert(some, all[1]) end
-
-    return some
-end
-
-function tune:get_row_tuning()
-    return self:get_param('row_tuning')
+    return self:get_scale_ivs()
 end
 
 local fret_pattern_names = { '8ve', '8ve+5th', '#+b' }
 local OCT, OCT_5TH, SHARP = 1, 2, 3
 
 function tune:add_params(separator_name)
-    local param_count = 2 + #self.scales + 2 + 12 + 2
+    local param_count = 4 
 
     -- params:add_separator('tuning')
     if self.add_param_separator then 
@@ -239,41 +185,26 @@ function tune:add_params(separator_name)
         end
     }
     --TODO: base key
-    for group_name, _ in pairs(self.scales) do
-        self:add_param{
-            type = 'option', id = 'scale_'..group_name, name = 'scale',
-            options = self.scale_names[group_name],
-        }
-    end
+    -- for group_name, _ in pairs(self.scales) do
+    --     self:add_param{
+    --         type = 'option', id = 'scale_'..group_name, name = 'scale',
+    --         options = self.scale_names[group_name],
+    --     }
+    -- end
     self:add_param{
-        type = 'number', id = 'row_tuning', name = 'row tuning',
-        min = 1, max = 12, default = 1,
-        formatter = function(p) 
-            local iv = self:get_intervals()
+        type = 'option', id = 'scale_class', name = 'scale class',
+        options = class_names,
+    }
+    self:add_param{
+        type = 'number', id = 'scale', name = 'scale', min = 1, max = 7,
+        formatter = function(p)
+            local group = self:get_tuning().scales
+            local class = class_names[self:get_param('scale_class')]
+            local idx = self:get_param('scale')
 
-            local rowint = p:get()
-
-            local deg = (rowint - 1)%#iv + 1
-            local interval = math.floor(iv[deg])
-
-            return interval_names[interval + 1]
+            return self.scales[group][class][idx].name
         end
     }
-    self:add_param{
-        type = 'option', id = 'fret_marks', name = 'fret marks',
-        options = fret_pattern_names, default = OCT,
-    }
-
-    -- params:add_group(self:get_param_id('note_toggles'), 'note toggles', 12)
-    for i = 1,12 do
-        self:add_param{
-            type = 'binary', behavior = 'toggle', 
-            id = 'enable_'..i, name = 'enable scale degree '..i,
-            default = 1,
-        }
-    end
-
-    self:hide_show_params()
 end
 
 function tune:wrap(deg, oct)
@@ -288,7 +219,7 @@ end
 --TODO: start row wrapping in the middle of the grid vertically somehow
 function tune:degoct(row, column, trans, toct)
     local iv = self:get_intervals()
-    local rowint = self:get_row_tuning() - 1
+    local rowint = 0 
     if rowint == 0 then rowint = #iv end
 
     local deg = (trans or 0) + row + ((column-1) * (rowint))

@@ -23,7 +23,8 @@ function Tune.grid.fretboard()
             local ivs = tune:get_intervals()
             -- local toct = toct or 0
             local tonic = tune:get_tonic()
-            local pattern = tune:get_param('fret_marks')
+            -- local pattern = tune:get_param('fret_marks')
+            local pattern = OCT 
 
             for i = 1, props.size do
                 local lvl
@@ -55,154 +56,6 @@ function Tune.grid.fretboard()
 
                 do
                     if lvl>0 then g:led(x, y, lvl) end
-                end
-            end
-        end
-    end
-end
-
--- local 
-kb = {}
-do
-    local __ = nil
-    kb.grid = {
-             { -11, __, -8, -6, __, -3, -1, 01, __, 04, 06, __, 09, 11, 13, __, 16, 18, __, 21 },
-         { -12, -10,  -9, -7, -5, -4, -2, 00, 02, 03, 05, 07, 08, 10, 12, 14, 15, 17, 19, 20, 22, }
-    }
-end
-kb.pos = {}
-for i = -12,22 do
-    for y = 1,2 do
-        for x,v in pairs(kb.grid[y]) do
-            if i == v then
-                kb.pos[i] = { x=x, y=y }
-                kb.pos[i+0.5] = { x=x, y=y }
-            end
-        end
-    end
-end
-kb.pos_octs = {}
-for i = -12, -1 do
-    kb.pos_octs[i] = {}
-    kb.pos_octs[i + 0.5] = {}
-    kb.pos_octs[i + 12] = {}
-    kb.pos_octs[i + 12 + 0.5] = {}
-    for oct = 0,2 do
-        local i_o = oct*12 + i
-        kb.pos_octs[i][oct + 1] = kb.pos[i_o]
-        kb.pos_octs[i + 0.5][oct + 1] = kb.pos[i_o]
-        kb.pos_octs[i + 12][oct + 1] = kb.pos[i_o]
-        kb.pos_octs[i + 12 + 0.5][oct + 1] = kb.pos[i_o]
-    end
-end
-
-function Tune.grid.tonic()
-    return function(props)
-        if crops.device == 'grid' then 
-            local left, top = props.left or 1, props.top or 1
-            local base = params:get('base_tonic')
-
-            if crops.mode == 'input' then
-                local x, y, z = table.unpack(crops.args)
-
-                for i = -11,11 do
-                    local pos = kb.pos[i + base]
-                    local d = pos.x - (base//2) - props.nudge
-
-                    if
-                        z == 1 
-                        and x == left + d 
-                        and y == top + pos.y - 1 
-                        and d >= 0 and d < props.width
-                    then
-                        crops.set_state(props.state, i)
-                        break
-                    end
-                end
-            elseif crops.mode == 'redraw' then
-                local g = crops.handler 
-
-                for i = -11,11 do
-                    local v = crops.get_state(props.state) or 1
-                    local pos = kb.pos[i + base]
-                    local lvl = props.levels[(v == i) and 2 or 1]
-                    local d = pos.x - (base//2) - props.nudge
-                    local x = left + d
-                    local y = top + pos.y - 1
-
-                    if lvl>0 and d >= 0 and d < props.width then g:led(x, y, lvl) end
-                end
-            end
-        end
-    end
-end
-
-function Tune.grid.scale_degrees_background()
-    return function(props)
-        if crops.device == 'grid' and crops.mode == 'redraw' then 
-            local g = crops.handler 
-            local left, top = props.left or 1, props.top or 1
-            local lvl = props.level
-            local base = params:get('base_tonic')
-
-            for i = -11,11 do
-                local pos = kb.pos[i + base]
-                local d = pos.x - (base//2) - props.nudge
-                local x = left + d
-                local y = top + pos.y - 1
-
-                if lvl>0 and d >= 0 and d < props.width then g:led(x, y, lvl) end
-            end
-        end
-    end
-end
-
-function Tune.grid.scale_degree()
-    return function(props)
-        if crops.device == 'grid' then 
-            local left, top = props.left or 1, props.top or 1
-            local base = params:get('base_tonic')
-
-            local tune = props.tune
-            local deg = props.degree
-            local ivs = tune:get_scale_ivs()
-            local iv = ivs[deg]
-
-            if iv then
-                local i = (math.floor(iv) + tune:get_tonic()) % 12
-                local ii = i
-                if ii > 2.5 then ii = ii - 12 end
-
-                if crops.mode == 'input' then
-                    local x, y, z = table.unpack(crops.args)
-
-                    for oct, pos in ipairs(kb.pos_octs[ii]) do 
-                        local d = pos.x - (base//2) - props.nudge
-                        if 
-                            z == 1 
-                            and x == left + d 
-                            and y == top + pos.y - 1 
-                            and d >= 0 and d < props.width
-                        then
-                            local v = crops.get_state(props.state) or 0
-
-                            crops.set_state(props.state, ~ v & 1)
-                            break
-                        end 
-                    end
-                elseif crops.mode == 'redraw' then
-                    local g = crops.handler 
-
-                    local v = crops.get_state(props.state) or 0
-                    local lvl = props.levels[v + 1]
-
-                    if lvl>0 then for oct, pos in ipairs(kb.pos_octs[ii]) do
-                        local d = pos.x - (base//2) - props.nudge
-                        local x = left + d
-                        local y = top + pos.y - 1
-
-                        if d >= 0 and d < props.width then g:led(x, y, lvl) end
-                    end end
                 end
             end
         end
@@ -250,7 +103,7 @@ function Tune.screen.scale_degrees()
             local deg = tab.key(ivs, iv)
 
             local is_interval = tab.contains(ivs, iv)
-            local is_enabled = deg and tune:get_interval_enabled(deg)
+            local is_enabled = deg and true
             local is_tonic = iv==0
 
             for oct, pos in ipairs(kb.pos_octs[ii]) do
