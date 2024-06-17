@@ -1,26 +1,33 @@
-local mu = require 'musicutil'
-
---TODO: switch to chromatic default, rather than pentatonic
-
 -- import 12tet scales from musicutil
-local twelvetone = {}
-local majp, minp, chrom
-for i,v in ipairs(mu.SCALES) do
-    local scl = { name=v.name, iv = {} }
-    for ii,vv in ipairs(v.intervals) do
-        if vv ~= 12 then table.insert(scl.iv, vv) end
-    end
-    if scl.name == 'Major Pentatonic' then majp = i end
-    if scl.name == 'Minor Pentatonic' then minp = i end
-    if scl.name == 'Chromatic' then chrom = i end
-    twelvetone[i] = scl
-end
--- put chromatic in front
--- table.insert(twelvetone, 1, table.remove(twelvetone, chrom))
 
--- put major pentatonic & minor pentatonic in front
-table.insert(twelvetone, 1, table.remove(twelvetone, minp))
-table.insert(twelvetone, 1, table.remove(twelvetone, majp+1))
+local major = { 0, 2, 4, 5, 7, 9, 11 }
+
+-- local 
+function mode(scale, base)
+    local m = {}
+
+    for i = 1,#scale do
+        local iv = util.wrap(i + base - 1, 1, #scale)
+        local offset = scale[base]
+
+        table.insert(m, util.wrap(scale[iv] - offset, 0, 11))
+    end
+
+    return m
+end
+
+-- local 
+heptatonic = {
+    { name = 'ionian', iv = mode(major, 1) },
+    { name = 'dorian', iv = mode(major, 2) },
+    { name = 'phrygian', iv = mode(major, 3) },
+    { name = 'lydian', iv = mode(major, 4) },
+    { name = 'myxolydian', iv = mode(major, 5) },
+    { name = 'aeolian', iv = mode(major, 6) },
+    { name = 'locrian', iv = mode(major, 7) },
+}
+
+local pentatonic = {}
 
 -- maqam scales - could defnintely use some more !
 local maqam = {
@@ -31,8 +38,12 @@ local maqam = {
     { name = 'Hijaz (Jins Rast)', iv = { 0, 1, 4, 5, 7, 8.5, 10, }},
 }
 
+-- local scale_groups = {
+--     ['12 tone'] = { heptatonic = heptatonic, pentatonic = pentatonic, },
+--     ['maqam'] = { heptatonic = maqam },
+-- }
 local scale_groups = {
-    ['12 tone'] = twelvetone,
+    ['12 tone'] = heptatonic,
     ['maqam'] = maqam,
 }
 
