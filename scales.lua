@@ -1,9 +1,4 @@
--- import 12tet scales from musicutil
-
-local major = { 0, 2, 4, 5, 7, 9, 11 }
-
--- local 
-function mode(scale, base)
+local function mode(scale, base)
     local m = {}
 
     for i = 1,#scale do
@@ -16,8 +11,9 @@ function mode(scale, base)
     return m
 end
 
--- local 
-heptatonic = {
+local major = { 0, 2, 4, 5, 7, 9, 11 }
+
+local heptatonic = {
     { name = 'ionian', iv = mode(major, 1) },
     { name = 'dorian', iv = mode(major, 2) },
     { name = 'phrygian', iv = mode(major, 3) },
@@ -27,7 +23,15 @@ heptatonic = {
     { name = 'locrian', iv = mode(major, 7) },
 }
 
-local pentatonic = {}
+local major_pentatonic = { 0, 2, 4, 7, 9, }
+
+local pentatonic = {
+    { name = 'gōng', iv = mode(major_pentatonic, 1) },
+    { name = 'shāng', iv = mode(major_pentatonic, 2) },
+    { name = 'jué', iv = mode(major_pentatonic, 3) },
+    { name = 'zhǐ', iv = mode(major_pentatonic, 4) },
+    { name = 'yǔ', iv = mode(major_pentatonic, 5) },
+}
 
 -- maqam scales - could defnintely use some more !
 local maqam = {
