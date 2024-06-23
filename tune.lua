@@ -173,11 +173,17 @@ tune.tonic_names = tonic_names
 -- local seman_cinot = tab.invert(tonic_names)
 
 local interval_names = {
-    'octaves',
-    "min 2nds", "maj 2nds",
-    "min 3rds", "maj 3rds", "4ths",
-    "tritones", "5ths", "min 6ths",
-    "maj 6ths", "min 7ths", "maj 7ths",
+    Chromatic = {
+        'octaves',
+        "min 2nds", "maj 2nds",
+        "min 3rds", "maj 3rds", "4ths",
+        "tritones", "5ths", "min 6ths",
+        "maj 6ths", "min 7ths", "maj 7ths",
+    },
+    diatonic = {
+        'octave',
+        "II", "III", "IV", "V", "VI", "VII", 
+    },
 }
 
 
@@ -249,14 +255,11 @@ function tune:add_params(separator_name)
         type = 'number', id = 'row_tuning', name = 'row tuning',
         min = 1, max = 12, default = 1,
         formatter = function(p) 
-            local iv = self:get_intervals()
+            local v = (p:get()  - 1)%#self:get_scale_ivs() + 1
+            local scale = params:string(self:get_scale_param_id())
+            if scale ~= "Chromatic" then scale = 'diatonic' end
 
-            local rowint = p:get()
-
-            local deg = (rowint - 1)%#iv + 1
-            local interval = math.floor(iv[deg])
-
-            return interval_names[interval + 1]
+            return interval_names[scale][v]
         end
     }
     self:add_param{
