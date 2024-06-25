@@ -13,6 +13,33 @@ end
 
 local OCT, OCT_5TH, SHARP = 1, 2, 3
 
+local function get_level(props, ivs, tonic, pattern, x, y)
+    local lvl
+    local o_x = props.flow == 'right' and props.x or props.x - props.wrap
+    local o_y = props.flow_wrap == 'up' and props.y or (
+        props.y - (props.size//props.wrap)
+    )
+    local column = x - o_x + 1 + (props.column_offset or 0)
+    local row = o_y - y + 1 + (props.row_offset or 0)
+
+    local deg = props.tune:degoct(column, row, props.trans, props.toct)
+    local iv = ivs[deg]
+    local n = (iv+tonic)%12+1
+
+    local mark = (
+        pattern == OCT and (
+            iv == 0
+        ) or pattern == OCT_5TH and (
+            iv == 0 or iv == 7
+        ) or pattern == SHARP and (
+            n==2 or n==5 or n==7 or n==10 or n==12
+        )
+    )
+    lvl = props.levels[mark and 2 or 1]
+
+    return lvl
+end
+
 function Tune.grid.fretboard()
     return function(props)
         if crops.device == 'grid' and crops.mode == 'redraw' then 
@@ -21,40 +48,56 @@ function Tune.grid.fretboard()
             local g = crops.handler 
 
             local ivs = tune:get_intervals()
-            -- local toct = toct or 0
             local tonic = tune:get_tonic()
             local pattern = tune:get_param('fret_marks')
 
             for i = 1, props.size do
-                local lvl
 
                 local x, y = Grid.util.index_to_xy(props, i)
-                do
-                    local o_x = props.flow == 'right' and props.x or props.x - props.wrap
-                    local o_y = props.flow_wrap == 'up' and props.y or (
-                        props.y - (props.size//props.wrap)
-                    )
-                    local column = x - o_x + 1 + (props.column_offset or 0)
-                    local row = o_y - y + 1 + (props.row_offset or 0)
-
-                    local deg = tune:degoct(column, row, props.trans, props.toct)
-                    local iv = ivs[deg]
-                    local n = (iv+tonic)%12+1
-
-                    local mark = (
-                        pattern == OCT and (
-                            iv == 0
-                        ) or pattern == OCT_5TH and (
-                            iv == 0 or iv == 7
-                        ) or pattern == SHARP and (
-                            n==2 or n==5 or n==7 or n==10 or n==12
-                        )
-                    )
-                    lvl = props.levels[mark and 2 or 1]
-                end
+                local lvl = get_level(props, ivs, tonic, pattern, x, y)
 
                 do
                     if lvl>0 then g:led(x, y, lvl) end
+                end
+            end
+        end
+    end
+end
+
+function Tune.screen.fretboard()
+    return function(props)
+        if crops.device == 'screen' and crops.mode == 'redraw' then 
+            local tune = props.tune
+            local ivs = tune:get_intervals()
+            local tonic = tune:get_tonic()
+            local pattern = tune:get_param('fret_marks')
+
+            for i = 1, props.size do
+                local mask_props = {
+                    flow = props.flow,
+                    flow_wrap = props.flow_wrap,
+                    wrap = props.wrap,
+                    padding = props.padding,
+                    column_offset = props.column_offset,
+                    row_offset = props.row_offset,
+                    tune = props.tune,
+                    levels = props.levels,
+                    x = 1,
+                    y = 1,
+                }
+
+                local x, y = Grid.util.index_to_xy(mask_props, i)
+                local lvl = get_level(mask_props, ivs, tonic, pattern, x, y)
+
+                do
+                    if lvl>0 then 
+                        screen.level(lvl)
+                        screen.pixel(
+                            (x - 1)*2 + props.x, 
+                            (y - 1)*2 + props.y
+                        )
+                        screen.fill()
+                    end
                 end
             end
         end
